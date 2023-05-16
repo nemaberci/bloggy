@@ -5,6 +5,7 @@ const http = require('http')
 const express = require('express')
 const app = express()
 const jwt = require("jsonwebtoken")
+const path = require('path');
 
 // load modules
 const {blogRead, blogCreate, blogDelete, blogUpdate} = require('./crud/blogs')
@@ -16,6 +17,9 @@ const logger = require('./modules/logger')
 const {Firestore} = require('@google-cloud/firestore');
 const validJwt = require('./middleware/validJwt')
 
+const defaultAdminUsername = process.env.ADMIN_USERNAME || "admin"
+const defaultAdminPassword = process.env.ADMIN_PASSWORD || "qwe123"
+
 // use middleware
 // parse application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: false }))
@@ -25,14 +29,14 @@ app.use(logger);
 app.use(express.json())
 
 // define routes
-app.get('/posts', async (req, res) => {
+app.get('/api/posts', async (req, res) => {
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   const firestore = new Firestore();
   res.send(await blogRead.allBlogs(firestore, username));
   firestore.terminate();
 })
 
-app.post('/posts/create', async (req, res) => {
+app.post('/api/posts/create', async (req, res) => {
   const input = req.body;
   input.username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   const firestore = new Firestore();
@@ -40,7 +44,7 @@ app.post('/posts/create', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/posts/update/:id', async (req, res) => {
+app.post('/api/posts/update/:id', async (req, res) => {
   const input = req.body;
   let id = req.params.id
   const firestore = new Firestore();
@@ -48,14 +52,14 @@ app.post('/posts/update/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/posts/delete/:id', async (req, res) => {
+app.post('/api/posts/delete/:id', async (req, res) => {
   let id = req.params.id
   const firestore = new Firestore();
   res.send(await blogDelete.deleteBlog(firestore, id));
   firestore.terminate();
 })
 
-app.get('/comments/user/:id', async (req, res) => {
+app.get('/api/comments/user/:id', async (req, res) => {
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   let id = req.params.id
   const firestore = new Firestore();
@@ -63,7 +67,7 @@ app.get('/comments/user/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.get('/comments/blog/:id', async (req, res) => {
+app.get('/api/comments/blog/:id', async (req, res) => {
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   let id = req.params.id
   const firestore = new Firestore();
@@ -71,7 +75,7 @@ app.get('/comments/blog/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/comments/create/blog/:id', async (req, res) => {
+app.post('/api/comments/create/blog/:id', async (req, res) => {
   let id = req.params.id
   const input = req.body;
   input.username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
@@ -81,7 +85,7 @@ app.post('/comments/create/blog/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/comments/update/:id', async (req, res) => {
+app.post('/api/comments/update/:id', async (req, res) => {
   const input = req.body;
   input.username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   let id = req.params.id
@@ -90,14 +94,14 @@ app.post('/comments/update/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/comments/delete/:id', async (req, res) => {
+app.post('/api/comments/delete/:id', async (req, res) => {
   let id = req.params.id
   const firestore = new Firestore();
   res.send(await commentDelete.deleteComment(firestore, id));
   firestore.terminate();
 })
 
-app.post('/comments/like/:id', async (req, res) => {
+app.post('/api/comments/like/:id', async (req, res) => {
   let id = req.params.id
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   const firestore = new Firestore();
@@ -105,7 +109,7 @@ app.post('/comments/like/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/comments/dislike/:id', async (req, res) => {
+app.post('/api/comments/dislike/:id', async (req, res) => {
   let id = req.params.id
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   const firestore = new Firestore();
@@ -113,7 +117,7 @@ app.post('/comments/dislike/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/posts/like/:id', async (req, res) => {
+app.post('/api/posts/like/:id', async (req, res) => {
   let id = req.params.id
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   const firestore = new Firestore();
@@ -121,7 +125,7 @@ app.post('/posts/like/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post('/posts/dislike/:id', async (req, res) => {
+app.post('/api/posts/dislike/:id', async (req, res) => {
   let id = req.params.id
   let username = jwt.decode(req.header("Authorization").substring("Bearer ".length))
   const firestore = new Firestore();
@@ -129,15 +133,16 @@ app.post('/posts/dislike/:id', async (req, res) => {
   firestore.terminate();
 })
 
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   let username = req.body["username"];
   let password = req.body["password"];
+  console.log(req.body, username);
   const firestore = new Firestore();
   res.send(await userRead.loginUser(firestore, username, password))
   firestore.terminate();
 })
 
-app.post("/users/create", async (req, res) => {
+app.post("/api/users/create", async (req, res) => {
   let username = req.body["username"];
   let password = req.body["password"];
   const firestore = new Firestore();
@@ -146,10 +151,42 @@ app.post("/users/create", async (req, res) => {
   firestore.terminate();
 })
 
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/html/index.html'));
+})
+
+app.get("/index.js", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/js/index.js'));
+})
+
+app.get("/index.css", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/css/index.css'));
+})
+
+app.get("/posts", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/html/posts.html'));
+})
+
+app.get("/posts.js", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/js/posts.js'));
+})
+
+app.get("/posts.css", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/css/posts.css'));
+})
+
+async function initAdmin() {
+  const firestore = new Firestore();
+  await userCreate.createUser(firestore, defaultAdminUsername, defaultAdminPassword);
+  firestore.terminate();
+}
+
+initAdmin();
+
 // create the server
 const server = http.createServer(app);
 
 // server listen for any incoming requests
-server.listen(3000);
+server.listen(8080);
 
-console.log('My express web server is alive and running at port 3000')
+console.log('My express web server is alive and running at port 8080')
