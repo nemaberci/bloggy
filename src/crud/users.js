@@ -32,7 +32,20 @@ let userRead = {
         } else {
             return "";
         }
-    }  
+    },
+
+    getUserById: async (firestore, id) => {
+
+        let user = await firestore.doc(`users/${id}`)
+        .get();
+        if (!user) {
+            return null;
+        }
+        return {
+            username: user.data().username
+        }
+
+    }
 
 }
 

@@ -142,6 +142,13 @@ app.post("/api/login", async (req, res) => {
   firestore.terminate();
 })
 
+app.get('/api/users/:id', async (req, res) => {
+  let id = req.params.id
+  const firestore = new Firestore();
+  res.send(await userRead.getUserById(firestore, id));
+  firestore.terminate();
+})
+
 app.post("/api/users/create", async (req, res) => {
   let username = req.body["username"];
   let password = req.body["password"];

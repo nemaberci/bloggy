@@ -19,25 +19,112 @@
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
             <ul class="navbar-nav" style="padding-left: 8px">
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Home</a>
+                    <a class="nav-link" href="/">Home</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" href="#">Posts <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="/posts">Posts <span class="sr-only">(current)</span></a>
                 </li>
             </ul>
         </div>
-    </nav>
 
-    <main role="main" class="container">
-
-        <div class="starter-template">
-            <h1>Bootstrap starter template</h1>
-            <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text
-                and a mostly barebones HTML document.</p>
+        <div id="loginForm" style="display: flex">
+            <div>
+                <input type="text" autocomplete="username" class="form-control" id="username" placeholder="username">
+            </div>
+            <div style="padding-left: 8px; padding-right: 8px;">
+                <input type="password" autocomplete="current-password" class="form-control" id="password"
+                    placeholder="****">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="login()">
+                Login
+            </button>
         </div>
 
+        <div id="logoutForm">
+            <button type="button" class="btn btn-primary" onclick="logout()">
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <main role="main" class="container" id="main" style="padding-top: 56px;">
+        
     </main>
 
+    <script>
+        if (sessionStorage.getItem("jwt")) {
+            document.getElementById("loginForm").classList.add("d-none");
+        } else {
+            document.getElementById("logoutForm").classList.add("d-none");
+        }
+        async function login() {
+            console.log("login clicked");
+            let res = await fetch("/api/login", {
+                method: "POST",
+                body: `
+                {
+                    "username": "${document.getElementById("username").value}",
+                    "password": "${document.getElementById("password").value}"
+                }
+                `,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            let jwt = await res.text();
+            if (jwt.length > 0) {
+                sessionStorage.setItem("jwt", jwt);
+                document.getElementById("loginForm").classList.add("d-none");
+                document.getElementById("logoutForm").classList.remove("d-none");
+            }
+        }
+        function logout() {
+            sessionStorage.removeItem("jwt");
+            document.getElementById("loginForm").classList.remove("d-none");
+            document.getElementById("logoutForm").classList.add("d-none");
+        }
+        document.addEventListener('DOMContentLoaded',
+            async () => {
+                let postsResponse = await fetch("/api/posts", {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem("jwt")}`
+                    }
+                });
+                let posts = await postsResponse.json();
+                console.log(posts);
+                for (let post of posts) {
+                    console.log(post);
+                    let title = document.createElement("h1");
+                    title.innerText = post.title;
+                    let content = document.createElement("span");
+                    content.innerText = post.content;
+                    content.setAttribute("style", "font-weight: lighter");
+                    let user = document.createElement("span");
+                    user.setAttribute("style", "font-weight: lighter; display: flex; justify-content: flex-end;")
+                    let usernameOfPostRequest = await fetch(`/api/users/${post.userId}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${sessionStorage.getItem("jwt")}`
+                        }
+                    });
+                    let usernameOfPost = (await usernameOfPostRequest.json()).username;
+                    user.innerText = usernameOfPost;
+                    let likes = document.createElement("span");
+                    likes.innerText = `👍:${post.likes}`;
+                    let innerDiv = document.createElement("div");
+                    innerDiv.setAttribute("class", "post");
+                    document.getElementById("main")
+                        .appendChild(innerDiv);
+                    innerDiv.appendChild(title)
+                    innerDiv.appendChild(content)
+                    innerDiv.appendChild(user)
+                    innerDiv.appendChild(likes);
+                }
+            },
+            false
+        );
+    </script>
     <script src="posts.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
