@@ -25,7 +25,9 @@ const defaultAdminPassword = process.env.ADMIN_PASSWORD || "qwe123"
 app.use(express.urlencoded({ extended: false }))
 // use logger module
 app.use(logger);
-// app.use('/posts', validJwt);
+app.use('/api/posts/*', validJwt);
+app.use('/api/comments/*', validJwt);
+app.use('/api/users/*', validJwt);
 app.use(express.json())
 
 // define routes
@@ -162,10 +164,6 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, '/static/html/index.html'));
 })
 
-app.get("/index.js", (req, res) => {
-  res.sendFile(path.join(__dirname, '/static/js/index.js'));
-})
-
 app.get("/index.css", (req, res) => {
   res.sendFile(path.join(__dirname, '/static/css/index.css'));
 })
@@ -174,12 +172,25 @@ app.get("/posts", (req, res) => {
   res.sendFile(path.join(__dirname, '/static/html/posts.html'));
 })
 
-app.get("/posts.js", (req, res) => {
-  res.sendFile(path.join(__dirname, '/static/js/posts.js'));
-})
 
 app.get("/posts.css", (req, res) => {
   res.sendFile(path.join(__dirname, '/static/css/posts.css'));
+})
+
+app.get("/comments/:postId", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/html/comments.html'));
+})
+
+app.get("/comments.css", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/css/comments.css'));
+})
+
+app.get("/comments/create/:postId", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/html/create_comment.html'));
+})
+
+app.get("/posts/create", (req, res) => {
+  res.sendFile(path.join(__dirname, '/static/html/create_post.html'));
 })
 
 async function initAdmin() {

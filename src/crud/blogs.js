@@ -24,6 +24,8 @@ let blogRead = {
             let blog = doc.data();
             blog.likes =  await likeRead.likesByBlog(firestore, doc.id)
             blog.likedByYou = await likeRead.userLikesBlog(firestore, doc.id, userId)
+            console.log(doc.id);
+            blog.id = doc.id;
             documentData.push(blog);
         }
 

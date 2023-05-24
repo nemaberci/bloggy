@@ -24,6 +24,7 @@ let commentRead = {
             let comment = doc.data();
             comment.likes =  await likeRead.likesByComment(firestore, doc.id)
             comment.likedByYou = await likeRead.userLikesComment(firestore, doc.id, yourUsedId)
+            comment.id = doc.id;
             documentData.push(comment);
         }
         return documentData
@@ -50,6 +51,7 @@ let commentRead = {
             let comment = doc.data();
             comment.likes =  await likeRead.likesByComment(firestore, doc.id)
             comment.likedByYou = await likeRead.userLikesComment(firestore, doc.id, userId)
+            comment.id = doc.id;
             documentData.push(comment);
         }
         return documentData

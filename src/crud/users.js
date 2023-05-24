@@ -21,10 +21,8 @@ let userRead = {
         }
         let user = users.docs[0].data();
         let salt = user.salt;
-        console.log(user, salt)
 
         let hashedPw = bcrypt.hashSync(pw, salt);
-        console.log(username, salt, hashedPw, user.password)
         if (hashedPw === user.password) {
             return jwt.sign(username, privateKey, {
                 algorithm: "RS256"
